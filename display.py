@@ -63,7 +63,7 @@ class ThreesMainWindow:
         pygame.display.flip()
         self.add_next()
 
-        while self.running:
+        while self._game.running and self.running:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -82,8 +82,28 @@ class ThreesMainWindow:
                     self.add_next()
                     pygame.display.flip()
 
+        if not self.running:
+            pygame.quit()
+
+        self.screen.fill((255, 255, 255))
+        game_over_font = pygame.font.SysFont("Times", 30)
+        game_over = game_over_font.render("Game over!", False, (0, 0, 0))
+        score = game_over_font.render("Final Score: {}".format(int(self._game.score)), False, (0, 0, 0))
+
+        self.screen.blit(game_over, (500,500))
+        self.screen.blit(score, (500, 530))
+        pygame.display.flip()
+
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+        
 
         pygame.quit()
+
+
+
 
 
 def NumberTile(width, height, number):

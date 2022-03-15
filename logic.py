@@ -10,6 +10,10 @@ class Grid:
         self._size = size
         self._grid = np.zeros(size*size, dtype = int)
     
+    def __eq__(self, other):
+        return np.array_equal(self._grid, other._grid)
+
+
     def __str__(self):
         base = "{}, {}, {}, {}\n"
         retval = ""
@@ -48,6 +52,18 @@ class Grid:
             return True
         else:
             return False
+    
+    def check_can_move(self, *args, **kwargs):
+        c = copy(self)
+        if c.swipe_down():
+            return True
+        if c.swipe_left():
+            return True
+        if c.swipe_right():
+            return True
+        if c.swipe_up():
+            return True
+        return False        
 
     def insert(self, x: int, y: int, val: int):
         i = self.get_index(x,y)
@@ -67,6 +83,7 @@ class Grid:
     @property
     def max(self):
         return np.max(self._grid)
+
 
     def swipe_left(self, *args, **kwargs):
         new_grid = copy(self._grid)
@@ -151,7 +168,8 @@ class Grid:
                     c = self.check_collision(new_grid[sindex], new_grid[sindex + 4])
                     if c:
                         new_grid[sindex + 4] = c
-                        new_grid[sindex] = 0            
+                        new_grid[sindex] = 0
+
         if np.array_equal(self._grid, new_grid):
             return False            
         self._grid = new_grid
@@ -170,8 +188,12 @@ class Game:
         g += "Score: {}".format(int(self.score))
         return g
 
+    @property
+    def running(self):
+        return self._running
 
     def _init(self, starting = 9, *args, **kwargs):
+        self._running = True
         self.get_basic_list()
         self._max = 3
         for i in range(starting):
@@ -216,24 +238,37 @@ class Game:
     def update(self):
         self._add_new()
         self.score = self._grid.get_score()
-        print(self)
 
     def swipeLeft(self, *args, **kwargs):
         if self._grid.swipe_left():
             self.update()
+        if not self._grid.has_empty and not self.can_move():
+            self._end_game()
 
     def swipeRight(self, *args, **kwargs):
         if self._grid.swipe_right():
             self.update()
-    
+        if not self._grid.has_empty and not self.can_move():
+            self._end_game()
+
     def swipeUp(self, *args, **kwargs):
         if self._grid.swipe_up():
             self.update()
+        if not self._grid.has_empty and not self.can_move():
+            self._end_game()
 
     def swipeDown(self, *args, **kwargs):
         if self._grid.swipe_down():
             self.update()
+        if not self._grid.has_empty and not self.can_move():
+            self._end_game()
+
+    def can_move(self):
+        return self._grid.check_can_move()
     
+    def _end_game(self, *args, **kwargs):
+        self._running = False
+
     def get_next(self, *args, **kwargs):
         if self._grid.max != self._max:
             self._max = self._grid.max
@@ -248,7 +283,6 @@ class Game:
         if not self._grid.has_empty:
             print("Game over!")
             print("Final Score: {}".format(self.score))
-            exit()
         else:
             self.add_tile(self._next)
             self._next = self.get_next()
