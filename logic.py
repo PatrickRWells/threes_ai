@@ -5,8 +5,8 @@ from copy import copy
 import math
 
 class Grid:
-
-    def __init__(self, size, *args, **kwargs):
+    _size = 4
+    def __init__(self, size = 4, *args, **kwargs):
         self._size = size
         self._grid = np.zeros(size*size, dtype = int)
     
@@ -15,12 +15,24 @@ class Grid:
         retval = ""
         for i in range(self._size):
             retval += base.format(*self._grid[i*self._size: ((i+1)*self._size)])
+
         return retval
+
+    @classmethod
     def get_index(self, x, y):
         if x >= self._size or y >= self._size:
             return
         return x*self._size + y
     
+    @classmethod
+    def get_xy(self, i):
+        return i%4,  math.floor(i/4)
+    
+    @property
+    def grid(self):
+        return self._grid
+
+
     def get_score(self):
         score = 0
         for val in self._grid:
@@ -168,6 +180,10 @@ class Game:
         self._next = self.get_next()
         self.score = self._grid.get_score()
 
+    
+    @property
+    def next(self):
+        return self._next
 
     def add_tile(self, val):
             x = random.randint(0, 3)
@@ -200,22 +216,23 @@ class Game:
     def update(self):
         self._add_new()
         self.score = self._grid.get_score()
+        print(self)
 
     def swipeLeft(self, *args, **kwargs):
-        self._grid.swipe_left()
-        self._add_new()
+        if self._grid.swipe_left():
+            self.update()
 
     def swipeRight(self, *args, **kwargs):
-        self._grid.swipe_right()
-        self.update()
+        if self._grid.swipe_right():
+            self.update()
     
     def swipeUp(self, *args, **kwargs):
-        self._grid.swipe_up()
-        self.update()
+        if self._grid.swipe_up():
+            self.update()
 
     def swipeDown(self, *args, **kwargs):
-        self._grid.swipe_down()
-        self.update()
+        if self._grid.swipe_down():
+            self.update()
     
     def get_next(self, *args, **kwargs):
         if self._grid.max != self._max:
@@ -225,6 +242,7 @@ class Game:
             return random.choice(self._bonus_list)
         else:
             return self.get_next_basic()
+    
     
     def _add_new(self, *args, **kwargs):
         if not self._grid.has_empty:
